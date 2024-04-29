@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Weather Data to Excel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+    <button onclick="fetchWeatherData()">Generate Excel</button>
+
+    <script>
+        function fetchWeatherData() {
+            // API endpoint for historical weather data
+            var apiUrl = "https://open-meteo.com/api/historical?hourly=cloud_cover&location_mode=csv_coordinates&csv_coordinates=-33.953812618324655,+22.467620475260386";
+
+            // Make API call to fetch CSV data
+            fetch(apiUrl)
+                .then(response => response.text())
+                .then(csvData => {
+                    // Parse CSV data using Papa Parse library
+                    var parsedData = Papa.parse(csvData, { header: true });
+                    var weatherData = parsedData.data;
+
+                    // Filter data for the past month
+                    var today = new Date();
+                    var pastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+                    var filteredData = weatherData.filter(row => new Date(row.datetime) >= pastMonth);
+
+                    // Create Excel workbook
+                    var wb = XLSX.utils.book_new();
+                    var ws = XLSX.utils.json_to_sheet(filteredData);
+
+                    // Add worksheet to workbook
+                    XLSX.utils.book_append_sheet(wb, ws, "Weather_Data");
+
+                    // Save workbook as Excel file
+                    XLSX.writeFile(wb, "weather_data.xlsx");
+                })
+                .catch(error => console.error('Error fetching weather data:', error));
+        }
+    </script>
+</body>
+</html>
